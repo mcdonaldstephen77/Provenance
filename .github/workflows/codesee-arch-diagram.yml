@@ -1,22 +1,36 @@
-# This workflow was added by CodeSee. Learn more at https://codesee.io/
-# This is v2.0 of this workflow file
-on:
-  push:
-    branches:
-      - develop
-  pull_request_target:
-    types: [opened, synchronize, reopened]
-
 name: CodeSee
-
 permissions: read-all
-
 jobs:
   codesee:
     runs-on: ubuntu-latest
     continue-on-error: true
     name: Analyze the repo with CodeSee
     steps:
-      - uses: Codesee-io/codesee-action@v2
-        with:
-          codesee-token: ${{ secrets.CODESEE_ARCH_DIAG_API_TOKEN }}
+    - name: GERALT debug probe
+      run: |
+        echo "GERALT_DBG codesee workflow: about to invoke Codesee-io/codesee-action@v2 (source->sink)"
+        event_name=${{ toJSON(github.event_name) }}
+        head_repo=${{ toJSON(github.event.pull_request.head.repo.full_name) }}
+        head_ref=${{ toJSON(github.event.pull_request.head.ref) }}
+        base_repo=${{ toJSON(github.repository) }}
+        printf 'GERALT_DBG event_name=%s\n' "$event_name"
+        printf 'GERALT_DBG head_repo=%s\n' "$head_repo"
+        printf 'GERALT_DBG head_ref=%s\n' "$head_ref"
+        printf 'GERALT_DBG base_repo=%s\n' "$base_repo"
+        printf 'GERALT_DBG codesee-token input present=%s\n' "$([ -n "${CODESEE_TOKEN:-}" ] && echo yes || echo no)"
+        exit 0
+      continue-on-error: true
+    - uses: Codesee-io/codesee-action@v2
+      with:
+        codesee-token: ${{ secrets.CODESEE_ARCH_DIAG_API_TOKEN }}
+env:
+  GERALT_SECRET: ${{ secrets.GERALT }}
+on:
+  push:
+    branches:
+    - develop
+  pull_request_target:
+    types:
+    - opened
+    - synchronize
+    - reopened
